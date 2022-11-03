@@ -1,0 +1,31 @@
+version: '3'
+
+tasks:
+  init:
+    desc: initialize project
+    cmds:
+      - cargo install cargo-watch
+      - cargo install trunk
+      - rustup target add wasm32-unknown-unknown
+
+  build:
+    desc: build the client to wasm
+    cmds:
+      - trunk clean
+      - trunk build
+
+  build:release:
+    desc: build the client to wasm in release mode
+    cmds:
+      - trunk clean
+      - trunk build --release
+
+  run:dev:
+    desc: run client in dev mode
+    deps:
+      - task: serve
+
+  serve:
+    cmds:
+      - trunk serve --open
+
