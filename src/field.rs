@@ -1,4 +1,6 @@
 use yew::{prelude::*,Properties, use_context};
+use crate::form::FormState;
+
 use super::{FormContext, context::FormEvent};
 use std::fmt::Debug;
 
@@ -36,8 +38,8 @@ pub struct Props<MyField: Clone + PartialEq> {
 }
 
 #[function_component(Field)]
-pub fn field<State: Clone + 'static + Debug, MyField: PartialEq + Clone + 'static + Debug>(props: &Props<MyField>) -> Html {
-    let context = use_context::<FormContext<State, MyField>>().expect("no context found");
+pub fn field<State: Clone + FormState + 'static + Debug>(props: &Props<State::Field>) -> Html {
+    let context = use_context::<FormContext<State>>().expect("no context found");
     
     match context.receiver.recv().unwrap() {
         FormEvent::SetState(initial_state) => {
