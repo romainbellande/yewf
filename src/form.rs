@@ -9,30 +9,29 @@ pub trait FormState: Clone + PartialEq {
 }
 
 #[derive(Properties)]
-pub struct Props<State> {
+pub struct Props<State: FormState> {
     #[prop_or_default]
     pub children: Children,
 
     pub initial_state: State,
-
-    pub id: &'static str,
 }
 
-impl<State> PartialEq for Props<State> {
+impl<State: FormState> PartialEq for Props<State> {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+        self.initial_state.get_form_id() == other.initial_state.get_form_id()
     }
 }
 
 #[function_component(Form)]
 pub fn form<State: Clone + FormState + 'static>(props: &Props<State>) -> Html {
 
-    let ctx = use_state(|| FormContext::new(props.id, props.initial_state.clone()));
+    let ctx = use_state(|| FormContext::new(props.initial_state.clone()));
 
     {
         let ctx = ctx.clone();
         if let Err(set_state_error) = ctx.sender.send(FormEvent::SetState(ctx.initial_state.clone())) {
-            log::error!("fail setting initial state in form {}, {}", props.id, set_state_error);
+            log::error!("fail setting initial state in form {}, {}",
+                props.initial_state.get_form_id(), set_state_error);
         }
     }
 

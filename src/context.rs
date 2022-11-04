@@ -12,35 +12,32 @@ pub enum FormEvent<State: FormState> {
 }
 
 pub struct FormContext<State: Clone + FormState> {
-    pub id: String,
     pub sender: Sender<FormEvent<State>>,
     pub receiver: Receiver<FormEvent<State>>,
     pub initial_state: State
 }
 
 impl<State: Clone + FormState> FormContext<State> {
-    pub fn new(id: &'static str, initial_state: State) -> Self {
+    pub fn new(initial_state: State) -> Self {
         let (sender, receiver) = unbounded();
 
         Self {
             initial_state,
             sender,
             receiver,
-            id: id.to_string()
         }
     }
 }
 
 impl<State: Clone + FormState> PartialEq for FormContext<State> {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+        self.initial_state.get_form_id() == other.initial_state.get_form_id()
     }
 }
 
 impl<State: FormState + Clone> Clone for FormContext<State> {
     fn clone(&self) -> Self {
         Self {
-            id: self.id.clone(),
             sender: self.sender.clone(),
             receiver: self.receiver.clone(),
             initial_state: self.initial_state.clone()

@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yewf::{Form, Field, FormState};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 struct MyFormState {
     form_id: String,
     foo: String,
@@ -11,16 +11,26 @@ struct MyFormState {
 impl MyFormState {
     pub fn new(form_id: &'static str) -> Self {
         Self {
-            foo: "foo".to_string(),
-            bar: 12,
             form_id: form_id.to_string(),
+            ..Default::default()
         }
     }
 
-    pub fn from_field(&self, field: AppField) -> AppValue {
+    pub fn set_field(mut self, field_value: AppFieldValue) {
+        match field_value {
+           AppFieldValue::Foo(value) => {
+               self.foo = value;
+           },
+           AppFieldValue::Bar(value) => {
+               self.bar = value;
+           }
+        }
+    }
+
+    pub fn from_field(&self, field: AppField) -> AppFieldValue {
         match field {
-            AppField::Foo => AppValue::Foo(self.foo.clone()),
-            AppField::Bar => AppValue::Bar(self.bar.clone()),
+            AppField::Foo => AppFieldValue::Foo(self.foo.clone()),
+            AppField::Bar => AppFieldValue::Bar(self.bar.clone()),
         }
     }
 }
@@ -39,16 +49,28 @@ impl PartialEq for MyFormState {
     }
 }
 
-enum AppValue {
+enum AppFieldValue {
     Foo(String),
     Bar(u32)
 }
 
-impl AppValue {
-    pub fn validate(&self) -> bool {
+impl AppFieldValue {
+    pub fn validate(&self) -> Result<(), &'static str> {
         match self {
-            Self::Foo(foo) => foo.len() > 5,
-            Self::Bar(bar) => bar > &5,
+            Self::Foo(foo) => {
+                if foo.len() > 5 {
+                    Ok(())
+                } else {
+                    Err("foo must be at least 5 characters long")
+                }
+            },
+            Self::Bar(bar) => {
+                if bar > &5 {
+                    Ok(())
+                } else {
+                    Err("bar must be greater than 5")
+                }
+            },
         }
     }
 }
@@ -65,7 +87,7 @@ fn app() -> Html {
     let initial_state = MyFormState::new("my_form");
 
     html! {
-        <Form<MyFormState> id={"my_form"} {initial_state}>
+        <Form<MyFormState> {initial_state}>
             <Field<MyFormState> name={AppField::Foo} />
         </Form<MyFormState>>
     }
