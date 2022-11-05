@@ -1,48 +1,46 @@
 use crossbeam_channel::{unbounded, Sender, Receiver};
+use super::FormState;
 
 trait Statable {
     fn get_field_by_name<T>(name: &'static str) -> T;
 }
 
 #[derive(Debug)]
-pub enum FormEvent<State, Field> {
+pub enum FormEvent<State: FormState> {
     SetState(State),
-    SetField(Field)
+    SetFieldValue(State::FieldValue)
 }
 
-pub struct FormContext<State: Clone, Field: Clone> {
-    pub id: String,
-    pub sender: Sender<FormEvent<State, Field>>,
-    pub receiver: Receiver<FormEvent<State, Field>>,
-    pub initial_state: State
+pub struct FormContext<State: Clone + FormState> {
+    pub sender: Sender<FormEvent<State>>,
+    pub receiver: Receiver<FormEvent<State>>,
+    pub state: State
 }
 
-impl<State: Clone, Field: Clone> FormContext<State, Field> {
-    pub fn new(id: &'static str, initial_state: State) -> Self {
+impl<State: Clone + FormState> FormContext<State> {
+    pub fn new(state: State) -> Self {
         let (sender, receiver) = unbounded();
 
         Self {
-            initial_state,
+            state,
             sender,
             receiver,
-            id: id.to_string()
         }
     }
 }
 
-impl<State: Clone, Field: Clone> PartialEq for FormContext<State, Field> {
+impl<State: Clone + FormState> PartialEq for FormContext<State> {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+        self.state.get_form_id() == other.state.get_form_id()
     }
 }
 
-impl<State: Clone, Field: Clone> Clone for FormContext<State, Field> {
+impl<State: FormState + Clone> Clone for FormContext<State> {
     fn clone(&self) -> Self {
         Self {
-            id: self.id.clone(),
             sender: self.sender.clone(),
             receiver: self.receiver.clone(),
-            initial_state: self.initial_state.clone()
+            state: self.state.clone()
         }
     }
 }

@@ -1,4 +1,6 @@
-use yew::{prelude::*,Properties, use_context};
+use yew::{prelude::*,Properties, use_context, use_effect};
+use crate::FormState;
+
 use super::{FormContext, context::FormEvent};
 use std::fmt::Debug;
 
@@ -36,17 +38,23 @@ pub struct Props<MyField: Clone + PartialEq> {
 }
 
 #[function_component(Field)]
-pub fn field<State: Clone + 'static + Debug, MyField: PartialEq + Clone + 'static + Debug>(props: &Props<MyField>) -> Html {
-    let context = use_context::<FormContext<State, MyField>>().expect("no context found");
-    
-    match context.receiver.recv().unwrap() {
-        FormEvent::SetState(initial_state) => {
-            log::debug!("initial state: {:?}", initial_state);
-        },
-        FormEvent::SetField(name) => {
-            log::debug!("set field {:?}", name);
-        }
-    };
+pub fn field<State: Clone + FormState + 'static + Debug>(props: &Props<State::Field>) -> Html {
+    let context = use_context::<FormContext<State>>().expect("no context found");
+
+    use_effect(move || {
+        let receiver = context.receiver.clone();
+
+        match receiver.recv().unwrap() {
+            FormEvent::SetState(initial_state) => {
+                log::debug!("initial state: {:?}", initial_state);
+            },
+            FormEvent::SetFieldValue(name) => {
+                log::debug!("set field {:?}", name);
+            }
+        };
+
+        || drop(receiver)
+    });
 
 
     html ! {
