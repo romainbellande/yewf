@@ -3,7 +3,9 @@ pub use context::FormContext;
 
 mod form;
 pub use form::Form;
-pub use form::FormState;
+
+mod state;
+pub use state::FormState;
 
 mod field;
 pub use field::Field;

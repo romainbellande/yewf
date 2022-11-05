@@ -15,31 +15,39 @@ impl MyFormState {
             ..Default::default()
         }
     }
+}
 
-    pub fn set_field(mut self, field_value: AppFieldValue) {
+impl FormState for MyFormState {
+    type Field = AppField;
+    type FieldValue = AppFieldValue;
+
+    fn get_form_id(&self) -> String {
+        self.form_id.clone()
+    }
+
+    fn get_fields_value(&self) -> Vec<Self::FieldValue> {
+        vec![
+            self.from_field(Self::Field::Foo),
+            self.from_field(Self::Field::Bar),
+        ]
+    }
+
+    fn set_field(mut self, field_value: Self::FieldValue) {
         match field_value {
-           AppFieldValue::Foo(value) => {
+           Self::FieldValue::Foo(value) => {
                self.foo = value;
            },
-           AppFieldValue::Bar(value) => {
+           Self::FieldValue::Bar(value) => {
                self.bar = value;
            }
         }
     }
 
-    pub fn from_field(&self, field: AppField) -> AppFieldValue {
+    fn from_field(&self, field: Self::Field) -> Self::FieldValue {
         match field {
-            AppField::Foo => AppFieldValue::Foo(self.foo.clone()),
-            AppField::Bar => AppFieldValue::Bar(self.bar.clone()),
+            Self::Field::Foo => Self::FieldValue::Foo(self.foo.clone()),
+            Self::Field::Bar => Self::FieldValue::Bar(self.bar.clone()),
         }
-    }
-}
-
-impl FormState for MyFormState {
-    type Field = AppField;
-
-    fn get_form_id(&self) -> String {
-        self.form_id.clone()
     }
 }
 
@@ -49,6 +57,7 @@ impl PartialEq for MyFormState {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 enum AppFieldValue {
     Foo(String),
     Bar(u32)
@@ -84,10 +93,10 @@ enum AppField {
 #[function_component(App)]
 fn app() -> Html {
     log::debug!("application started");
-    let initial_state = MyFormState::new("my_form");
+    let state = MyFormState::new("my_form");
 
     html! {
-        <Form<MyFormState> {initial_state}>
+        <Form<MyFormState> {state}>
             <Field<MyFormState> name={AppField::Foo} />
         </Form<MyFormState>>
     }

@@ -1,5 +1,5 @@
 use crossbeam_channel::{unbounded, Sender, Receiver};
-use super::form::FormState;
+use super::FormState;
 
 trait Statable {
     fn get_field_by_name<T>(name: &'static str) -> T;
@@ -8,21 +8,21 @@ trait Statable {
 #[derive(Debug)]
 pub enum FormEvent<State: FormState> {
     SetState(State),
-    SetField(State::Field)
+    SetFieldValue(State::FieldValue)
 }
 
 pub struct FormContext<State: Clone + FormState> {
     pub sender: Sender<FormEvent<State>>,
     pub receiver: Receiver<FormEvent<State>>,
-    pub initial_state: State
+    pub state: State
 }
 
 impl<State: Clone + FormState> FormContext<State> {
-    pub fn new(initial_state: State) -> Self {
+    pub fn new(state: State) -> Self {
         let (sender, receiver) = unbounded();
 
         Self {
-            initial_state,
+            state,
             sender,
             receiver,
         }
@@ -31,7 +31,7 @@ impl<State: Clone + FormState> FormContext<State> {
 
 impl<State: Clone + FormState> PartialEq for FormContext<State> {
     fn eq(&self, other: &Self) -> bool {
-        self.initial_state.get_form_id() == other.initial_state.get_form_id()
+        self.state.get_form_id() == other.state.get_form_id()
     }
 }
 
@@ -40,7 +40,7 @@ impl<State: FormState + Clone> Clone for FormContext<State> {
         Self {
             sender: self.sender.clone(),
             receiver: self.receiver.clone(),
-            initial_state: self.initial_state.clone()
+            state: self.state.clone()
         }
     }
 }
